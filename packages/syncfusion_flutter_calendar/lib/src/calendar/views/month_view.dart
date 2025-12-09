@@ -39,7 +39,8 @@ class MonthViewWidget extends StatefulWidget {
     this.height,
     this.weekNumberStyle,
     this.isMobilePlatform,
-    this.visibleAppointmentNotifier, {
+    this.visibleAppointmentNotifier,
+    this.numberOfDaysInMonthView, {
     super.key,
   });
 
@@ -113,6 +114,9 @@ class MonthViewWidget extends StatefulWidget {
   /// when its value changed.
   final ValueNotifier<List<CalendarAppointment>?> visibleAppointmentNotifier;
 
+  /// Defines the number of days (columns) in the month view.
+  final int numberOfDaysInMonthView;
+
   @override
   // ignore: library_private_types_in_public_api
   _MonthViewWidgetState createState() => _MonthViewWidgetState();
@@ -147,23 +151,23 @@ class _MonthViewWidgetState extends State<MonthViewWidget> {
     final List<Widget> children = <Widget>[];
     final double weekNumberPanelWidth =
         CalendarViewHelper.getWeekNumberPanelWidth(
-          widget.calendar.showWeekNumber,
-          widget.width,
-          widget.isMobilePlatform,
-        );
+      widget.calendar.showWeekNumber,
+      widget.width,
+      widget.isMobilePlatform,
+    );
     if (widget.builder != null) {
       final int visibleDatesCount = widget.visibleDates.length;
-      final double cellWidth =
-          (widget.width - weekNumberPanelWidth) / DateTime.daysPerWeek;
+      final double cellWidth = (widget.width - weekNumberPanelWidth) /
+          widget.numberOfDaysInMonthView;
       final double cellHeight = widget.height / widget.rowCount;
       double xPosition = weekNumberPanelWidth, yPosition = 0;
       final int currentMonth =
           widget.visibleDates[visibleDatesCount ~/ 2].month;
       final bool showTrailingLeadingDates =
           CalendarViewHelper.isLeadingAndTrailingDatesVisible(
-            widget.rowCount,
-            widget.showTrailingAndLeadingDates,
-          );
+        widget.rowCount,
+        widget.showTrailingAndLeadingDates,
+      );
       for (int i = 0; i < visibleDatesCount; i++) {
         final DateTime currentVisibleDate = widget.visibleDates[i];
         if (!showTrailingLeadingDates &&
@@ -179,9 +183,9 @@ class _MonthViewWidgetState extends State<MonthViewWidget> {
 
         final List<CalendarAppointment> appointments =
             AppointmentHelper.getSpecificDateVisibleAppointment(
-              currentVisibleDate,
-              widget.visibleAppointmentNotifier.value,
-            );
+          currentVisibleDate,
+          widget.visibleAppointmentNotifier.value,
+        );
         List<dynamic> monthCellAppointment = appointments;
         if (widget.calendar.dataSource != null &&
             !AppointmentHelper.isCalendarAppointment(
@@ -240,6 +244,7 @@ class _MonthViewWidgetState extends State<MonthViewWidget> {
       widget.calendar.weekNumberStyle,
       weekNumberPanelWidth,
       widget.isMobilePlatform,
+      widget.numberOfDaysInMonthView,
       children: children,
       widget.builder,
     );
@@ -276,6 +281,7 @@ class _MonthViewRenderObjectWidget extends MultiChildRenderObjectWidget {
     this.weekNumberStyle,
     this.weekNumberPanelWidth,
     this.isMobilePlatform,
+    this.numberOfDaysInMonthView,
     this.builder, {
     List<Widget> children = const <Widget>[],
   }) : super(children: children);
@@ -302,6 +308,7 @@ class _MonthViewRenderObjectWidget extends MultiChildRenderObjectWidget {
   final WeekNumberStyle weekNumberStyle;
   final double weekNumberPanelWidth;
   final bool isMobilePlatform;
+  final int numberOfDaysInMonthView;
   final MonthCellBuilder? builder;
 
   @override
@@ -329,6 +336,7 @@ class _MonthViewRenderObjectWidget extends MultiChildRenderObjectWidget {
       weekNumberStyle,
       weekNumberPanelWidth,
       isMobilePlatform,
+      numberOfDaysInMonthView,
       builder,
     );
   }
@@ -361,6 +369,7 @@ class _MonthViewRenderObjectWidget extends MultiChildRenderObjectWidget {
       ..weekNumberPanelWidth = weekNumberPanelWidth
       ..weekNumberStyle = weekNumberStyle
       ..isMobilePlatform = isMobilePlatform
+      ..numberOfDaysInMonthView = numberOfDaysInMonthView
       ..builder = builder;
   }
 }
@@ -389,6 +398,7 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
     this._weekNumberStyle,
     this._weekNumberPanelWidth,
     this._isMobilePlatform,
+    this._numberOfDaysInMonthView,
     this.builder,
   );
 
@@ -731,6 +741,23 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
     }
   }
 
+  int _numberOfDaysInMonthView;
+
+  int get numberOfDaysInMonthView => _numberOfDaysInMonthView;
+
+  set numberOfDaysInMonthView(int value) {
+    if (_numberOfDaysInMonthView == value) {
+      return;
+    }
+
+    _numberOfDaysInMonthView = value;
+    if (childCount == 0) {
+      markNeedsPaint();
+    } else {
+      markNeedsLayout();
+    }
+  }
+
   MonthCellBuilder? builder;
 
   @override
@@ -811,7 +838,7 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
       _drawMonthCells(context.canvas, size);
     } else {
       final double cellWidth =
-          (size.width - weekNumberPanelWidth) / DateTime.daysPerWeek;
+          (size.width - weekNumberPanelWidth) / numberOfDaysInMonthView;
       final double cellHeight = size.height / rowCount;
       double xPosition = weekNumberPanelWidth, yPosition = 0;
       RenderBox? child = firstChild;
@@ -819,9 +846,9 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
       final int currentMonth = visibleDates[visibleDatesCount ~/ 2].month;
       final bool showTrailingLeadingDates =
           CalendarViewHelper.isLeadingAndTrailingDatesVisible(
-            rowCount,
-            showTrailingAndLeadingDates,
-          );
+        rowCount,
+        showTrailingAndLeadingDates,
+      );
       _drawWeekNumberPanel(context.canvas, cellHeight);
       for (int i = 0; i < visibleDatesCount; i++) {
         final DateTime currentVisibleDate = visibleDates[i];
@@ -831,16 +858,14 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
         /// date.
         if (currentVisibleDate.weekday == DateTime.monday) {
           /// Calculate the row start date based on visible dates index.
-          final DateTime startDate =
-              visibleDates[(i ~/ DateTime.daysPerWeek) * DateTime.daysPerWeek];
+          final DateTime startDate = visibleDates[
+              (i ~/ numberOfDaysInMonthView) * numberOfDaysInMonthView];
 
           /// Calculate the row end date based on visible dates index.
-          final DateTime endDate =
-              addDuration(
-                    startDate,
-                    const Duration(days: DateTime.daysPerWeek - 1),
-                  )
-                  as DateTime;
+          final DateTime endDate = addDuration(
+            startDate,
+            const Duration(days: numberOfDaysInMonthView - 1),
+          ) as DateTime;
 
           /// Used to check the start and end date is current month date or not.
           final bool isCurrentMonthWeek =
@@ -972,8 +997,7 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
       size.height - padding,
     );
     _linePainter.style = PaintingStyle.fill;
-    _linePainter.color =
-        weekNumberStyle.backgroundColor ??
+    _linePainter.color = weekNumberStyle.backgroundColor ??
         calendarTheme.weekNumberBackgroundColor!;
     final RRect roundedRect = RRect.fromRectAndRadius(
       rect,
@@ -1031,27 +1055,25 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
       color: currentMonthTextStyle.color != null
           ? currentMonthTextStyle.color!.withValues(alpha: 0.38)
           : themeData.brightness == Brightness.light
-          ? Colors.black26
-          : Colors.white38,
+              ? Colors.black26
+              : Colors.white38,
     );
 
     final bool showTrailingLeadingDates =
         CalendarViewHelper.isLeadingAndTrailingDatesVisible(
-          rowCount,
-          showTrailingAndLeadingDates,
-        );
+      rowCount,
+      showTrailingAndLeadingDates,
+    );
 
-    final Color currentMonthBackgroundColor =
-        monthCellStyle.backgroundColor ??
+    final Color currentMonthBackgroundColor = monthCellStyle.backgroundColor ??
         calendarTheme.activeDatesBackgroundColor!;
     final Color nextMonthBackgroundColor =
         monthCellStyle.leadingDatesBackgroundColor ??
-        calendarTheme.leadingDatesBackgroundColor!;
+            calendarTheme.leadingDatesBackgroundColor!;
     final Color previousMonthBackgroundColor =
         monthCellStyle.trailingDatesBackgroundColor ??
-        calendarTheme.trailingDatesBackgroundColor!;
-    final Color todayBackgroundColor =
-        monthCellStyle.todayBackgroundColor ??
+            calendarTheme.trailingDatesBackgroundColor!;
+    final Color todayBackgroundColor = monthCellStyle.todayBackgroundColor ??
         calendarTheme.todayBackgroundColor!;
 
     TextStyle textStyle = currentMonthTextStyle;
@@ -1069,17 +1091,15 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
             visibleDates[(i ~/ DateTime.daysPerWeek) * DateTime.daysPerWeek];
 
         /// Calculate the row end date based on visible dates index.
-        final DateTime endDate =
-            addDuration(
-                  startDate,
-                  const Duration(days: DateTime.daysPerWeek - 1),
-                )
-                as DateTime;
+        final DateTime endDate = addDuration(
+          startDate,
+          const Duration(days: DateTime.daysPerWeek - 1),
+        ) as DateTime;
 
         /// Used to check the start and end date is current month date or not.
         final bool isCurrentMonthWeek =
             startDate.month == currentMonthDate.month ||
-            endDate.month == currentMonthDate.month;
+                endDate.month == currentMonthDate.month;
 
         if (weekNumberPanelWidth != 0 &&
             (showTrailingLeadingDates ||
@@ -1298,9 +1318,8 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
     _linePainter.strokeWidth = linePadding;
     _linePainter.color = cellBorderColor ?? calendarTheme.cellBorderColor!;
     xPosition = isRTL ? 0 : weekNumberPanelWidth;
-    final double finalXPosition = isRTL
-        ? size.width - weekNumberPanelWidth
-        : size.width;
+    final double finalXPosition =
+        isRTL ? size.width - weekNumberPanelWidth : size.width;
     canvas.drawLine(
       Offset(xPosition, linePadding),
       Offset(finalXPosition, linePadding),
@@ -1311,16 +1330,16 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
         Offset(
           isMobilePlatform
               ? isRTL
-                    ? 0
-                    : weekNumberPanelWidth
+                  ? 0
+                  : weekNumberPanelWidth
               : 0,
           yPosition,
         ),
         Offset(
           isMobilePlatform
               ? isRTL
-                    ? size.width - weekNumberPanelWidth
-                    : size.width
+                  ? size.width - weekNumberPanelWidth
+                  : size.width
               : size.width,
           yPosition,
         ),
@@ -1334,9 +1353,8 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
       Offset(size.width, size.height - linePadding),
       _linePainter,
     );
-    xPosition = weekNumberPanelWidth != 0 && !isRTL
-        ? weekNumberPanelWidth
-        : cellWidth;
+    xPosition =
+        weekNumberPanelWidth != 0 && !isRTL ? weekNumberPanelWidth : cellWidth;
     canvas.drawLine(
       const Offset(linePadding, 0),
       Offset(linePadding, size.height),
@@ -1386,9 +1404,9 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
     final double cellHeight = size.height / rowCount;
     final bool showTrailingLeadingDates =
         CalendarViewHelper.isLeadingAndTrailingDatesVisible(
-          rowCount,
-          showTrailingAndLeadingDates,
-        );
+      rowCount,
+      showTrailingAndLeadingDates,
+    );
     final int currentMonth = visibleDates[visibleDates.length ~/ 2].month;
     for (int i = 0; i < visibleDates.length; i++) {
       final DateTime currentVisibleDate = visibleDates[i];
@@ -1402,12 +1420,10 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
             visibleDates[(i ~/ DateTime.daysPerWeek) * DateTime.daysPerWeek];
 
         /// Calculate the row end date based on visible dates index.
-        final DateTime endDate =
-            addDuration(
-                  startDate,
-                  const Duration(days: DateTime.daysPerWeek - 1),
-                )
-                as DateTime;
+        final DateTime endDate = addDuration(
+          startDate,
+          const Duration(days: DateTime.daysPerWeek - 1),
+        ) as DateTime;
 
         /// Used to check the start and end date is current month date or not.
         final bool isCurrentMonthWeek =

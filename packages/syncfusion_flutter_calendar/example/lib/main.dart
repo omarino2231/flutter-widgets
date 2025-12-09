@@ -37,6 +37,8 @@ class _MyHomePageState extends State<MyHomePage> {
         // mode property
         monthViewSettings: const MonthViewSettings(
           appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
+          // TEST: Show only 5 columns instead of 7 (default)
+          numberOfDaysInMonthView: 5,
         ),
       ),
     );

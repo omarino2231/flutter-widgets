@@ -68,10 +68,12 @@ class MonthViewSettings with Diagnosticable {
     this.agendaViewHeight = -1,
     this.monthCellStyle = const MonthCellStyle(),
     this.agendaStyle = const AgendaStyle(),
-  }) : assert(appointmentDisplayCount >= 0),
-       assert(numberOfWeeksInView >= 1 && numberOfWeeksInView <= 6),
-       assert(agendaItemHeight >= -1),
-       assert(agendaViewHeight >= -1);
+    this.numberOfDaysInMonthView = 7,
+  })  : assert(appointmentDisplayCount >= 0),
+        assert(numberOfWeeksInView >= 1 && numberOfWeeksInView <= 6),
+        assert(agendaItemHeight >= -1),
+        assert(agendaViewHeight >= -1),
+        assert(numberOfDaysInMonthView >= 1 && numberOfDaysInMonthView <= 7);
 
   /// Formats the text in the [SfCalendar] month view view header.
   ///
@@ -612,9 +614,41 @@ class MonthViewSettings with Diagnosticable {
   ///           navigationDirection: MonthNavigationDirection.horizontal),
   ///      ),
   ///    );
-  ///  }
   /// ```
   final MonthNavigationDirection navigationDirection;
+
+  /// The number of days (columns) to display in [SfCalendar]'s month view.
+  ///
+  /// Allows customization of the number of columns shown in the month view.
+  /// By default, the month view displays 7 columns (one for each day of the week).
+  /// This property can be used to show fewer columns, which is useful for better
+  /// visualization on smaller screens or specific layout requirements.
+  ///
+  /// Defaults to `7`.
+  ///
+  /// _Note:_ The value must be between 1 and 7 (inclusive).
+  ///
+  /// See also:
+  /// * [numberOfWeeksInView], which allows to customize the number of weeks
+  /// displayed in the month view.
+  /// * [showTrailingAndLeadingDates], which controls the visibility of leading
+  /// and trailing dates in month view.
+  ///
+  /// ```dart
+  ///Widget build(BuildContext context) {
+  ///    return Container(
+  ///      child: SfCalendar(
+  ///        view: CalendarView.month,
+  ///        monthViewSettings: MonthViewSettings(
+  ///           numberOfDaysInMonthView: 5,
+  ///           numberOfWeeksInView: 4,
+  ///           appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
+  ///           showAgenda: false),
+  ///      ),
+  ///    );
+  ///  }
+  /// ```
+  final int numberOfDaysInMonthView;
 
   @override
   bool operator ==(Object other) {
@@ -640,7 +674,8 @@ class MonthViewSettings with Diagnosticable {
         otherSetting.agendaViewHeight == agendaViewHeight &&
         otherSetting.showTrailingAndLeadingDates ==
             showTrailingAndLeadingDates &&
-        otherSetting.navigationDirection == navigationDirection;
+        otherSetting.navigationDirection == navigationDirection &&
+        otherSetting.numberOfDaysInMonthView == numberOfDaysInMonthView;
   }
 
   @override
@@ -674,6 +709,9 @@ class MonthViewSettings with Diagnosticable {
         showTrailingAndLeadingDates,
       ),
     );
+    properties.add(
+      IntProperty('numberOfDaysInMonthView', numberOfDaysInMonthView),
+    );
   }
 
   @override
@@ -690,6 +728,7 @@ class MonthViewSettings with Diagnosticable {
       agendaItemHeight,
       showTrailingAndLeadingDates,
       navigationDirection,
+      numberOfDaysInMonthView,
     );
   }
 }

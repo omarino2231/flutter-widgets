@@ -1093,7 +1093,7 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
         /// Calculate the row end date based on visible dates index.
         final DateTime endDate = addDuration(
           startDate,
-          const Duration(days: DateTime.daysPerWeek - 1),
+          Duration(days: DateTime.daysPerWeek - 1),
         ) as DateTime;
 
         /// Used to check the start and end date is current month date or not.
@@ -1422,7 +1422,7 @@ class _MonthViewRenderObject extends CustomCalendarRenderObject {
         /// Calculate the row end date based on visible dates index.
         final DateTime endDate = addDuration(
           startDate,
-          const Duration(days: DateTime.daysPerWeek - 1),
+          Duration(days: DateTime.daysPerWeek - 1),
         ) as DateTime;
 
         /// Used to check the start and end date is current month date or not.
